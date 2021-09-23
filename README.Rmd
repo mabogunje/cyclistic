@@ -1,0 +1,110 @@
+---
+title: "Data Exploration"
+author: "Damola Mabogunje"
+date: "9/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+install.packages("librarian")
+librarian::shelf(tidyr, dplyr, here, lubridate, ggplot2)
+
+```
+
+## Introduction
+
+This is my data analysis for the Cyclistic bike-share analysis case study. In this R project, you will find the steps I took to answer the key business questions, posed by the Case Study. I have followed the steps of the data analysis process: Ask, Prepare, Process, Analyze, Share, and Act. Along the way, I determine the answers to the Business tasks put before me.
+
+By the end of this file, I will have presented a portfolio-ready case study.
+
+## Verifying the Data
+
+Data for this Analysis was secured from an online bucket / datasource of the last several months of a Bike Sharing Company's bike trips. This resource was provided by a 3rd party source i.e Google, for the purpose of analysis. They in turn got it from Motivate Inc who operate the Divvy Bike Share Service for the City of Chicago.
+
+I verified this information by visiting the respective websites, and ascertaining that Divvy indeed exists, and is providing their data under a license. I reviewed the license and found everything to be in order. So in fact, the data did "ROCCC." That is, it was Reliable, Original, Current (I used data from the last 12 months), Cited, and Comprehensive.
+
+## Exploring the Data
+
+To get a sense of the data, I picked the most recent file in my dataset, and browsed it with a few R Commands from the Tidyverse and Dplyr
+
+```{r data exploration}
+
+aug_2021_biketrips <- read.csv(here("data/202108-divvy-tripdata.csv"))
+head(aug_2021_biketrips)
+```
+
+Now, having looked at the first few rows, I notice that the dates for **started_at** and **ended_at** are stored as characters instead of datetimes, so I want to change that using the *lubridate* library.
+
+```{r transforming the date columns}
+
+aug_2021_biketrips <- aug_2021_biketrips %>% 
+  mutate(started_at = ymd_hms(started_at)) %>% 
+  mutate(ended_at = ymd_hms(ended_at)) 
+
+```
+
+With that done, we can now add a calculated column of the time spent on each ride. I have a theory that the people who spend the most time cycling, are either members or casual cyclists more likely to become members.
+
+```{r calculate and sort by time spent }
+
+aug_2021_biketrips <- aug_2021_biketrips %>% 
+  mutate(time_spent = ended_at - started_at) %>% 
+  arrange(-time_spent)
+
+```
+Wow! Contrary to my expectation, casual cyclists topped the list of time spent biking. Let me see if that holds true across the board.
+
+```{r }
+
+ggplot(aug_2021_biketrips) +
+  geom_jitter(aes(x = rideable_type, y = time_spent, color = member_casual))
+
+```
+Yes it does. Not only do casual riders spend more time cycling, but they also seem to have a preference for the docked bike (over electric, and classic). But, this was simply the case in August 2021. Let's look back over the course of 12 months and see if the data still reflects the same way.
+
+## Creating The Full Dataset
+
+```{r looking over a 12 month period}
+
+biketrips <- list.files(path = here("data"), full.names = TRUE) %>% 
+  lapply(read.csv) # %>% 
+# bind_rows 
+
+# Bind rows doesn't work because for some reason the start_station_id and end_station_id column doesn't maintain the same data type across files. So we're just going to have to fix it up..
+
+merged_biketrips <- bind_rows(biketrips[1], biketrips[2], biketrips[3])
+
+merged_biketrips <- merged_biketrips %>% 
+  mutate(start_station_id = as.character(start_station_id)) %>% 
+  mutate(end_station_id = as.character(end_station_id))
+
+merged_biketrips_2 <- bind_rows(biketrips[4], biketrips[5], biketrips[6],
+                                biketrips[7], biketrips[8], biketrips[9],
+                                biketrips[10], biketrips[11], biketrips[12])
+
+merged_biketrips <- bind_rows(merged_biketrips, merged_biketrips_2)
+```
+
+Now we have all the data, we can see if the august sample was reflective of the whole population. But first we need to rebuild the time spent column in our full dataset.
+
+```{r calculating time spent over the full dataset}
+
+merged_biketrips <- merged_biketrips %>% 
+  mutate(started_at = ymd_hms(started_at)) %>% 
+  mutate(ended_at = ymd_hms(ended_at)) %>% 
+  mutate(time_spent = ended_at - started_at)
+
+```
+
+Finally, we can reconsider the plot of time spent by casual and member riders per bike type.
+
+```{r Plotting the full dataset with time spent}
+
+ggplot(merged_biketrips) +
+  geom_jitter(aes(x = rideable_type, y = time_spent, color = member_casual))
+
+```
+
+We see that there must be some incorrect start-time / end-time values because there are some negative values in time spent but worry not, the most important trends are still reflected. Casual riders **clearly spend the most time cycling**, and they prefer **docked bikes**.
