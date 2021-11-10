@@ -86,6 +86,7 @@ ggplot(aug_2021_biketrips) +
   geom_jitter(aes(x = rideable_type, y = ride_length, color = member_casual))
 
 ```
+
 Yes it does. Not only do casual riders spend more time cycling, but they also seem to have a preference for the docked bike (over electric, and classic). But, this was simply the case in August 2021. Let's look back over the course of 12 months and see if the data still reflects the same way.
 
 ## Creating The Full Dataset
@@ -168,6 +169,7 @@ ggplot(all_trips) +
   theme(axis.text.x = element_text(angle = 25))
 
 ```
+
 And then lets check out the relationship between bikes and travel distances by member type
 
 ```{r plot rideable type against distances travelled by member_casual }
@@ -176,6 +178,14 @@ ggplot(all_trips) +
   geom_jitter(aes(x = rideable_type, y = distance, color = member_casual))
 
 ```
+
 ## Conclusions
 
 As we can see from the last few plots, casual riders are the most numerous riders, and they prefer docked bikes. Whereas members prefer electric and classic bikes. Also as is shown in the second plot, the most popular days for casual riders riding are Saturday & Sunday while members do similar amounts of riding throughout the week. Finally as far as distance goes, we can see that both members and casual riders ride about the same distances across bikes.
+
+So, given this information, what are my top 3 recommendations?
+
+1. Perhaps create a special offer for members using docked bikes. To encourage docked bike users (mostly casual) to consider taking up memberships.
+2. Perhaps offer discounts on the weekends for members. Again to encourage weekend riders (mostly casual), to become members.
+3. Finally, a public leader board might be an interesting idea. To recognize riders who spend the most time biking (currently casual riders), and encourage people to ride more.
+
